@@ -77,7 +77,7 @@ setwd("C:/Users/Daniel/ISLR")
 # 1. variance of hat_f(X0)
 # 2. the squared bias of hat_f(X0)
 # 3. the variance of the error terms(epsilon)
-# In order to mnimize the expected test error, we need to select a statistical learning
+# In order to minimize the expected test error, we need to select a statistical learning
 # method that simultaneously achieves low variance and low bias
 # Variance refers to the amount by which ˆf would change if we estimated it using a different training data set. 
 # Bias refers to the error that is introduced by approximating a real-life problem, 
@@ -171,11 +171,11 @@ summary(mpg)
 
 # 2.4 Exercise
 # 1_a :: n : large, p : small :: flexible method is better
-# because sample suze is large enough to fit more parameters and
+# because sample size is large enough to fit more parameters and
 # small number of predictors limits model variance
 
 # 1_b :: n : small, p : large ::  flexible learning is worse
-# because it would bt more likely to overfit
+# because it would be more likely to overfit
 
 # 1_c :: the relationship between the predictors and response is highly nonlinear
 # flexible is better because it is less restrictive on the shape of fit
@@ -233,7 +233,7 @@ dev.off()
 ## prior assumption. 
 ## Disadvantages are hard to interpret and prone to overfitting
 ## A more flexible approach might be preferred is the underlying data is very
-## complex or if we mainly care about th result and not inference
+## complex or if we mainly care about the result and not inference
 ## A less flexible model is preferred is the underlying data has a simple shape
 ## or if inference is important
 
@@ -307,16 +307,153 @@ summary(college)
 boxplot(Outstate ~ Elite, data=college, xlab='Elite', ylab='Outstate')
 
 par(mfrow=c(2, 2))
-hist(college$Apps)
-hist(college$Enroll)
-hist(college$Expend)
-hist(college$Outstate)
+hist(college$Apps, breaks = 50, xlim=c(0,25000), main="Apps")
+hist(college$Enroll, breaks = 25, main='Enroll')
+hist(college$Expend, breaks = 25, main='Expend')
+hist(college$Outstate, main='Outstate')
+
+head(college)
+par(mfrow=c(1,1))
+hist(college$Accept)
+str(college)
+
+boxplot(Terminal ~ Elite, data=college)
+boxplot(Room.Board ~ Private, data=college, col='blue', 
+        horizontal=T)
+
+boxplot(Top10perc ~ Private, data=college)
+
+# 9
+# part a
+library(ISLR)
+data(Auto)
+head(Auto)
+str(Auto)
+
+# quantitative predictors :: mpg, cylinders, displacement, horsepower, weight, 
+# acceleration, year
+
+Auto$origin
+# qualitative ::name, origin
+
+# part b
+range(Auto$mpg)
+range(Auto$cylinders)
+range(Auto$displacement)
+range(Auto$horsepower)
+range(Auto$weight)
+range(Auto$acceleration)
+range(Auto$year)
+
+# part c
+head(Auto)
+dim(Auto)
+head(Auto[, 1:7])
+sapply(Auto[, 1:7], mean)
+sapply(Auto[, 1:7], sd)
+
+# part d :: remove the 10th through 85th
+Auto_1 = Auto[-(10:85), ]
+sapply(Auto_1[, 1:7], mean)
+sapply(Auto_1[, 1:7], sd)
+sapply(Auto_1[, 1:7], range)
+
+windows()
+pairs(Auto[, 1:7])
+
+# mpg is negatively correlated with cylinders, displacement, 
+# horsepower and weight
+
+# horsepower is positively correlated with weight
+
+# mpg mosty increases for newer model years
+
+# yes, the plots show that there are relationship between
+# mpg and other variables in the dataset
+
+# 10
+
+# part a
+library(MASS)
+Boston
+?Boston
+dim(Boston)
+# 506 rows and 14 columns
+
+# part b
+windows()
+pairs(Boston)
+
+# relationship between crime rate per capita and other
+# variables don't seem to be linear
+
+# part c
+# Are any of the predictors associated with per capita crime rate?
+
+library(reshape2)
+library(ggplot2)
+names(Boston)
+melted_bos <- melt(Boston, id='crim')
+melted_bos
+ggplot(melted_bos, aes(x=value, y=crim)) +
+  facet_wrap(~variable, scales='free') +
+  geom_point()
+
+(corrmatrix <- cor(Boston, use='complete.obs')[1, ])
+corrmatrix[corrmatrix > .5 | corrmatrix < -.5][-1]
+
+# some correlations with each variable, except chas
+
+# crime rate seem to spike within certain zones
+## when rad is > 20
+## when tax is between 600 and 700
+## when zn is close to 0
+## etc...
+
+## negative correlation with dis, medv and may be black
+
+# part d
+head(Boston)
+g <- ggplot(Boston, aes(x=1:nrow(Boston), y=crim))
+g + geom_point()
+g <- ggplot(Boston, aes(x=1:nrow(Boston), y=tax))
+g + geom_point()
+g <- ggplot(Boston, aes(x=1:nrow(Boston), y=ptratio))
+g + geom_point()
+
+# definitely outliers for crim and tax
+# no clear outlier for ptratio
 
 
+# part e
+# how many of the suburbs in this data set bound the 
+# Charles river??
+table(Boston$chas)
 
+# part e
+median(Boston$ptratio)
 
+# part g
+# median value of owner :: medv
+seltown <- Boston[Boston$medv == min(Boston$medv),]
+seltown
+# overall quartiles and range of predictors
+sapply(Boston, quantile)
 
+# part e
+names(Boston)
+Boston$rm
+Boston[Boston$rm > 7, ]
+nrow(Boston[Boston$rm > 7, ]) # 64
+nrow(Boston[Boston$rm > 8, ]) # 13
 
+sapply(Boston[Boston$rm > 8, ], mean)
+sapply(Boston, median)
+rbind(sapply(Boston[Boston$rm > 8, ], mean), sapply(Boston, median))
+
+# crim rates are higher (almost 3X)
+# higher proportion of 25K sq ft lots
+# higher medv value
 
 
 
