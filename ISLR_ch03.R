@@ -316,6 +316,7 @@ summary(fit.lm)
 # 4) 
 
 new <- data.frame(horsepower=98)
+new
 predict(fit.lm, new)
 predict(fit.lm, new, interval = 'confidence')
 predict(fit.lm, new, interval = 'prediction')
@@ -337,16 +338,436 @@ pairs(Auto)
 
 # part b)
 str(Auto)
-subset(Auto, select=-name)
+# subset(Auto, select=-name)
 head(subset(Auto, select=-name))
 cor(subset(Auto, select=-name))
 
 # part c)
 fit.lm <- lm(mpg ~.-name, data=Auto)
 summary(fit.lm)
-# - There is a relationship between predictors andn response
+# - There is a relationship between predictors and response
 # - weight, year, origin and displacement have statistically significant relationships
 # - .75 coefficient for year suggests that later model year cars have better(higher) mpg
+
+# part d)
+par(mfrow=c(2,2))
+plot(fit.lm)
+# - evidence of non-linearity
+# - observarion 14th has high leverage
+
+# part e)
+fit.lm_0 <- lm(mpg ~ displacement + weight + year + origin, data=Auto)
+fit.lm_1 <- lm(mpg ~ displacement*weight+ year + origin, data=Auto)
+fit.lm_2 <- lm(mpg ~ displacement*year + weight + origin, data=Auto)
+fit.lm_3 <- lm(mpg ~ displacement*origin + weight + origin, data=Auto)
+fit.lm_4 <- lm(mpg ~ displacement + weight*year + origin, data=Auto)
+fit.lm_5 <- lm(mpg ~ displacement + weight*origin + year, data=Auto)
+fit.lm_6 <- lm(mpg ~ displacement + weight + year*origin, data=Auto)
+
+summary(fit.lm_1) ## displacement:weight / there is interaction effect 
+summary(fit.lm_2) ## displacement:year / there is interaction effect
+summary(fit.lm_3) ## displacement:origin / there is no interaction effect
+summary(fit.lm_4) ## weight:year / there is interaction effect
+summary(fit.lm_5) ## weight:orign / there is interaction effect
+summary(fit.lm_6) ## year:origin / there is interaction effect
+
+fit.lm <- lm(mpg ~ displacement + weight + year + origin + 
+     displacement:weight + displacement:year + weight:year + weight:origin +
+     year:origin, data=Auto)
+
+summary(fit.lm)
+
+fit.lm <- lm(mpg ~ year + displacement:weight, data=Auto)
+summary(fit.lm)
+
+
+fit.lm <- lm(mpg ~ displacement + weight + year + displacement:weight, data=Auto)
+summary(fit.lm)
+
+par(mfrow=c(1,1))
+plot(Auto$displacement, Auto$mpg)
+
+# part f)
+# try 3 predictor transformations
+
+fit.lm4 <- lm(mpg ~  poly(displacement, 3) + weight + year + origin, data=Auto)
+summary(fit.lm4)
+# displacement^2 has a larger effect than other displacement polynomials
+
+fit.lm5 <- lm(mpg ~ displacement + I(log(weight)) + year + origin, data=Auto)
+summary(fit.lm5)
+
+fit.lm6 <- lm(mpg ~ displacement + I(weight^2) + year + origin, data=Auto)
+summary(fit.lm6)
+
+# 10.
+
+# part a)
+library(ISLR)
+data("Carseats")
+fit.lm <- lm(Sales ~ Price + Urban + US, data=Carseats)
+summary(fit.lm)
+
+# part b)
+# Price(-0.054459) :: Sales drop by 54 for each dollar increase in Price - statistically significant
+# UrbanYes(-0.021916) :: Sales are 22 lower for Urban locations - not statistically significant
+# USYes(1.200573) :: Sales are 1,201 higher in the US locations - statistically significant
+
+# part c)
+# Sales = 13.043 - 0.054*Price - 0.022*UrbanYes + 1.201*USYes
+
+# part d)
+# we can reject null hypothesis for Price and USYes(coefficients have low p-value)
+
+# part e)
+fit.lm1 <- lm(Sales ~ Price + US, data=Carseats)
+summary(fit.lm1)
+
+# part f)
+# fit.lm(Price, Urban, US)
+# RSE = 2.472
+# R^2 = 0.2393
+
+# fit.lm1(Price, US)
+# RSE = 2.469
+# R^2 = .2393
+
+# fit.lm1 has a slightly better :: lower RSE value and less predictor variable
+
+# part g)
+confint(fit.lm1)
+
+# part h)
+par(mfrow=c(2,2))
+# residuals vs fitted plot doesn't show strong outliers
+plot(fit.lm1)
+
+par(mfrow=c(1,1))
+plot(predict(fit.lm1), rstudent(fit.lm1))
+# studentized residuals within -3 to 3 range
+
+library(car)
+qqPlot(fit.lm1, main='QQ Plot')
+leveragePlots(fit.lm1) # leverage plots
+plot(hatvalues(fit.lm1))
+
+# average obs leverage (p+1)/n = (2+1)/400 = 0.0075
+# data may have some leverage issues
+
+# 11.
+set.seed(1)
+x=rnorm(100)
+y=2*x + rnorm(100)
+
+# part a)
+fit.lm_y <- lm(y~x+0)
+summary(fit.lm_y)
+# small std. error for coefficient relative to coefficient estimate.
+# p-value is close to zero so statistically significant
+
+# part b)
+fit.lm_x <- lm(x~y+0)
+summary(fit.lm_x)
+# small std. error for coefficient relative to coefficient estimate.
+# p-value is close to zero so statistically significant
+
+# part c)
+
+# part d) 
+# t-statistic
+sqrt(length(x)-1)*sum(x*y) / sqrt(sum(x^2)*sum(y^2) - sum(x*y)^2)
+# 18.72593
+
+# part e) 
+# Given the result of (d), notwithstanding we change x with y, t-statistic remains
+# same for the regression of x onto y, comparing to the regression of y onto x.
+
+# part f)
+lm.fit_y_onto_x = lm(y~x) # with an intercept
+summary(lm.fit_y_onto_x)
+
+lm.fit_x_onto_y = lm(x~y)
+summary(lm.fit_x_onto_y)
+
+# t-statistic for above two models are same(18.56)
+
+# 12.
+
+# part a)
+# when sum(x_i)^2 = sum(y_i)^2, the coefficient estimate for the regression of X
+# onto Y is the same as the one for regression of Y on X
+
+# part b)
+set.seed(1)
+x=rnorm(100)
+y=2*x
+
+sum(x)
+sum(y)
+
+lm.fit1 = lm(y ~ x + 0)
+lm.fit2 = lm(x ~ y +0)
+
+summary(lm.fit1) # 2.0
+summary(lm.fit2) # .5
+
+# the regression coefficient estimates are different for above two models
+
+# part c)
+set.seed(1)
+x=rnorm(100)
+y=sample(x, replace=FALSE, 100) # a random permutation
+sum(x^2) == sum(y^2)
+
+lm.fit1 = lm(y ~ x + 0)
+lm.fit2 = lm(x ~ y + 0)
+
+summary(lm.fit1)
+summary(lm.fit2)
+
+# the regression coefficient estimates are same for above two models
+
+# 13.
+
+# part a)
+set.seed(1)
+x = rnorm(100)
+
+# part b)
+eps = rnorm(100, mean=0, sd=.25)
+
+# part c)
+y = -1 + .5*x + eps
+length(y)
+# beta_0= -1, beta_1 = .5
+
+# part d)
+plot(x, y)
+# x and y has a positive correlation
+
+# part e)
+lm.fit <- lm(y ~ x)
+summary(lm.fit)
+# almost same
+
+# part f)
+plot(x, y)
+abline(-1, .5, lwd=2, col='blue', lty=2)
+abline(lm.fit, lwd=2, col='red', lty=1)
+legend('bottomright',
+       c('population regression line', 'least squares line'),
+       lty=c(2, 1), lwd=c(2, 2), col=c('blue', 'red'))
+
+# part g)
+lm.fit2 <- lm(y ~ x + I(x^2))
+summary(lm.fit2)
+
+anova(lm.fit, lm.fit2)
+
+# R^2 remain the same (.7828) for the two models, therefore there is no
+# evidence that the quadratic term improves the model fit
+
+# part h) 
+set.seed(1)
+x = rnorm(100)
+eps = rnorm(100, mean=0, sd=.1)
+y = -1 + .5*x + eps
+lm.fit3 <- lm(y~x)
+
+plot(x, y)
+abline(-1, .5, col='blue', lty='dashed')
+abline(lm.fit3, col='red')
+legend('bottomright', 
+       c('population regression line', 'least squares line'),
+       lty=c(2,1), lwd=c(2.5, 2.5), col=c('blue', 'red'))
+
+summary(lm.fit3)
+# R^2 has been increased from .7784 to .9565 indicating that the model fits current
+# dataset better
+
+# part 13)
+set.seed(1)
+x = rnorm(100)
+eps = rnorm(100, mean=0, sd=.5)
+y=-1 + .5*x + eps
+
+lm.fit4 = lm(y ~ x)
+
+windows()
+plot(x, y)
+abline(-1, .5, lwd=2, col='blue', lty='dashed')
+abline(lm.fit4, lwd=2, col='red')
+legend('bottomright', 
+       c('population regression line', 'least squares line'),
+       lty=c(2,1), lwd=c(2.5, 2.5), col=c('blue', 'red'))
+
+# part j)
+
+# original dataset
+confint(lm.fit)
+# less noisy dataset
+confint(lm.fit3)
+# noiser dataset
+confint(lm.fit4)
+
+# 14.
+# part a)
+set.seed(1)
+x1 = runif(100)
+x2 = .5*x1 + rnorm(100)/10
+y = 2 + 2*x1 + .3*x2 + rnorm(100)
+
+# part b)
+plot(x1, x2)
+
+# part c)
+lm.fit = lm(y ~ x1 + x2)
+summary(lm.fit)
+
+# Due to p-value for H_0 : hat_bata_1 = 0, which is less than cutoff value .05,
+# therefore we can reject the null hypothesis and favor the alternative one.
+
+# P-value for H_0 : hat_beta_2 = 0 is 0.3754, which is much greater than cutoff
+# value, therefore there is not enough to reject H_0 : hat_beta_2 = 0
+
+# part d)
+
+lm.fit2 = lm(y ~ x1)
+summary(lm.fit2)
+# p_value for hat_beta_1 = 0 is nearly 0, so we can reject the null hypothesis
+
+# part e)
+lm.fit3 = lm(y ~ x2)
+summary(lm.fit3)
+# p_value for hat_beta_2 = 0 is nearly 0, so we can reject the null hypithesis
+
+# part f) 
+# No, the result obtained so far do not contradict each other. Since there is
+# an interaction effect between x_1 and x_2, increase any of them will increase
+# the other variable and thus help fit the data. Therefore, when we do a linear 
+# regression on x_1 and x_2 individually, we can't reject null hypothesis (i.e.
+# we can't tell which variable indeed has no relationship with y). But y is
+# regressed upon both x_1 anc x_2, in this case, we are able to reject one of them
+
+# part g)
+summary(x1)
+summary(x2)
+x1 = c(x1, .1)
+x2 = c(x2, .8)
+y = c(y, 6)
+
+par(mfrow=c(2,2))
+lm.fit4 = lm(y ~ x1 + x2)
+summary(lm.fit4)
+
+windows()
+par(mfrow=c(2,2))
+plot(lm.fit4)
+
+lm.fit5 = lm(y ~ x1)
+summary(lm.fit5)
+plot(lm.fit5)
+
+lm.fit6 = lm(y ~ x2)
+summary(lm.fit6)
+plot(lm.fit6)
+
+# After adding new observation in x_1, the R^2 has been decreased from .2024 to .1562, 
+# meaning the newly added observation is an outlier. Futhurmore, the second plots also
+# show that the newly added obsevation in x_1 is an outlier
+
+# The third plot shows that the newly added observation in x_2 is a high leverage point
+
+# 15.
+
+# part a)
+library(ISLR)
+library(MASS)
+data(Boston)
+
+attach(Boston)
+
+names(Boston)
+str(Boston)
+
+names(Boston)[-1]
+t(subset(Boston, select='zn'))
+c(t(subset(Boston, select='zn')))
+
+sim_beta_js = c()
+for (name in names(Boston)[-1]) {
+  predictor = c(t(subset(Boston, select = name)))
+  lm.fit = lm(crim ~ predictor)
+  sim_beta_js <- c(sim_beta_js, coef(lm.fit)[2])
+  print(paste('Runnning simple linear regression : ', name))
+  print(summary(lm.fit))
+}
+# All predictors except chas are statistical significant
+
+# part b)
+lm.fit = lm(crim~., data=Boston)
+summary(lm.fit)
+
+# we can reject null hypothesis for predictors including zn, dis, rad, black, medv
+
+# part c)
+# Results in (b) have much more predictors which are not statistically significant 
+# comparing to the reult in (a)
+sim_beta_js # :: univariate regression coefficients
+coef(lm.fit)[-1] # :: multivariate regression coefficients
+
+par(mfrow=c(1,1))
+plot(sim_beta_js, coef(lm.fit)[-1])
+
+names(Boston)
+which.max(sim_beta_js)
+names(Boston)[which.max(sim_beta_js) + 1] ## +1 because of 'crim' column
+coef(lm.fit)[which.max(sim_beta_js) + 1]
+max(sim_beta_js)
+
+# predictor nox has univariable regression coefficient estimate of 31 and
+# multiple regression coefficient estimate of -10
+
+for (name in names(Boston)[-1]){
+  predictor = c(t(subset(Boston, select=name)))
+  lm.fit = lm(crim ~ predictor + I(predictor^2) + I(predictor^3)) # adding non-linearity
+  print(paste('Running simple linear regression on:', name))
+  print(summary(lm.fit))
+}
+
+# There are evidences of non-linear association between predictor and response 
+# for indux, nox, dis, ptratio, medv.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
